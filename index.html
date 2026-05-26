@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snip — URL Shortener</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #F7F5F0;
+      --surface:   #FFFFFF;
+      --border:    #E4E0D8;
+      --border-md: #C9C4B8;
+      --text:      #1C1A17;
+      --muted:     #7A7469;
+      --accent:    #2C5F2E;
+      --accent-lt: #EAF3DE;
+      --accent-dk: #1A3E1C;
+      --danger:    #993C1D;
+      --danger-lt: #FAECE7;
+      --warn:      #BA7517;
+      --warn-lt:   #FAEEDA;
+      --info:      #185FA5;
+      --info-lt:   #E6F1FB;
+      --radius:    10px;
+      --radius-lg: 16px;
+      --shadow:    0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 58px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-brand {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.45rem;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+    .nav-brand span { color: var(--accent); }
+    .nav-links { display: flex; gap: 0.25rem; }
+    .nav-links a {
+      font-size: 0.875rem;
+      font-weight: 400;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--bg); }
+    .nav-links a.active { color: var(--accent); font-weight: 500; }
+
+    /* ── LAYOUT ── */
+    .page { display: none; }
+    .page.visible { display: block; }
+
+    /* ── HERO ── */
+    .hero {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-lt);
+      border: 1px solid #C0DD97;
+      border-radius: 100px;
+      padding: 0.3rem 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.4rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+    .hero p {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 480px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.7;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-primary:hover { background: var(--accent-dk); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-outline {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border-md);
+      padding: 0.7rem 1.5rem;
+      border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 400;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-outline:hover { border-color: var(--text); background: var(--bg); }
+    .btn-outline:active { transform: scale(0.98); }
+
+    /* ── FEATURE CARDS ── */
+    .features {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2rem 5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 1.5rem 1.75rem;
+      box-shadow: var(--shadow);
+    }
+    .feature-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+    .icon-green { background: var(--accent-lt); color: var(--accent); }
+    .icon-blue { background: var(--info-lt); color: var(--info); }
+    .icon-amber { background: var(--warn-lt); color: var(--warn); }
+    .feature-card h3 { font-size: 0.95rem; font-weight: 500; margin-bottom: 0.4rem; }
+    .feature-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── FORM PAGES ── */
+    .form-wrap {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 3.5rem 2rem 5rem;
+    }
+    .page-header { margin-bottom: 2.25rem; }
+    .page-header h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.9rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-header p { font-size: 0.9rem; color: var(--muted); }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card-body { padding: 1.75rem 1.75rem; }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+    input[type="text"],
+    input[type="url"],
+    input[type="datetime-local"] {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border-md);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      appearance: none;
+    }
+    input:focus {
+      border-color: var(--accent);
+      background: var(--surface);
+      box-shadow: 0 0 0 3px rgba(44,95,46,0.1);
+    }
+    .field { margin-bottom: 1.25rem; }
+    .field:last-of-type { margin-bottom: 0; }
+    .field-hint { font-size: 0.78rem; color: var(--muted); margin-top: 0.3rem; }
+
+    .optional-tag {
+      font-size: 0.72rem;
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--muted);
+      opacity: 0.8;
+    }
+
+    .submit-row {
+      padding: 1.25rem 1.75rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+    }
+    .btn-submit {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.65rem 1.6rem;
+      border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-submit:hover { background: var(--accent-dk); }
+    .btn-submit:active { transform: scale(0.98); }
+    .btn-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* ── RESULT CARD ── */
+    .result-card {
+      margin-top: 1.25rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: none;
+    }
+    .result-card.show { display: block; animation: slideUp 0.25s ease; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 1.25rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+    .result-header.success { background: var(--accent-lt); color: var(--accent-dk); }
+    .result-header.error   { background: var(--danger-lt); color: var(--danger); }
+    .result-header.warn    { background: var(--warn-lt); color: var(--warn); }
+
+    .result-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+    }
+    .result-icon.s { background: var(--accent); color: #fff; }
+    .result-icon.e { background: var(--danger); color: #fff; }
+    .result-icon.w { background: var(--warn); color: #fff; }
+
+    .result-body { padding: 1.25rem 1.5rem; }
+    .result-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.55rem 0;
+    }
+    .result-row + .result-row { border-top: 1px solid var(--border); }
+    .result-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
+    .result-value {
+      font-size: 0.88rem;
+      color: var(--text);
+      font-weight: 500;
+      word-break: break-all;
+      text-align: right;
+    }
+    .result-value.code {
+      font-family: 'DM Mono', 'SF Mono', monospace;
+      background: var(--bg);
+      padding: 0.2rem 0.5rem;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .copy-btn {
+      background: none;
+      border: 1px solid var(--border-md);
+      border-radius: 6px;
+      padding: 0.25rem 0.55rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover { background: var(--bg); color: var(--text); border-color: var(--text); }
+
+    /* ── REDIRECT PAGE ── */
+    .status-blob {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ── SPINNER ── */
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 520px) {
+      nav { padding: 0 1rem; }
+      .hero { padding: 3rem 1.25rem 2.5rem; }
+      .features { padding: 0 1.25rem 3rem; }
+      .form-wrap { padding: 2rem 1.25rem 4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-brand" href="#" onclick="show('home')">Sn<span>i</span>p</a>
+    <div class="nav-links">
+      <a href="#" id="nav-home"     onclick="show('home')"     class="active">Home</a>
+      <a href="#" id="nav-shorten"  onclick="show('shorten')"  >Shorten</a>
+      <a href="#" id="nav-redirect" onclick="show('redirect')" >Redirect</a>
+    </div>
+  </nav>
+
+  <!-- ══════════════ HOME ══════════════ -->
+  <div id="page-home" class="page visible">
+
+    <section class="hero">
+      <span class="hero-eyebrow">URL Shortener</span>
+      <h1>Long URLs, <em>cut short.</em></h1>
+      <p>Paste any URL, get a clean short code instantly. Share it anywhere, set expiry dates, and redirect with ease.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="show('shorten')">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Shorten a URL
+        </button>
+        <button class="btn-outline" onclick="show('redirect')">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Use a short code
+        </button>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="feature-card">
+        <div class="feature-icon icon-green">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 1 0 12 0A6 6 0 0 0 2 8ZM8 5v3.5l2 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Expiry control</h3>
+        <p>Set an optional expiry date. Expired codes return a clear error — no silent failures.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon icon-blue">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M6 10.5 10.5 6M5 3H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-2M10 2h4m0 0v4m0-4L7 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Instant redirect</h3>
+        <p>Paste your short code, get sent straight to the original URL. Click count tracked automatically.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon icon-amber">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2Zm0 3v3l2.5 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>No duplicates</h3>
+        <p>Submitting the same URL twice? We return the existing code — clean and efficient by default.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ══════════════ SHORTEN ══════════════ -->
+  <div id="page-shorten" class="page">
+    <div class="form-wrap">
+      <div class="page-header">
+        <h2>Shorten a URL</h2>
+        <p>Paste your long URL below. We'll generate a unique short code.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="field">
+            <label for="s-url">Destination URL</label>
+            <input type="url" id="s-url" placeholder="https://example.com/very/long/path" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="s-expiry">Expiry date <span class="optional-tag">— optional</span></label>
+            <input type="datetime-local" id="s-expiry" />
+            <div class="field-hint">Leave blank for a permanent link.</div>
+          </div>
+        </div>
+        <div class="submit-row">
+          <button class="btn-submit" id="shorten-btn" onclick="shortenUrl()">
+            <span id="shorten-btn-label">Generate short code</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="result-card" id="shorten-result">
+        <div class="result-header" id="shorten-result-header">
+          <div class="result-icon" id="shorten-result-icon"></div>
+          <span id="shorten-result-title"></span>
+        </div>
+        <div class="result-body" id="shorten-result-body"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════ REDIRECT ══════════════ -->
+  <div id="page-redirect" class="page">
+    <div class="form-wrap">
+      <div class="page-header">
+        <h2>Use a short code</h2>
+        <p>Enter the short code and you'll be redirected to the original URL.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="field">
+            <label for="r-code">Short code</label>
+            <input type="text" id="r-code" placeholder="e.g. aB3xQz" autocomplete="off" maxlength="24" />
+            <div class="field-hint">The short code from your shortened URL.</div>
+          </div>
+        </div>
+        <div class="submit-row">
+          <button class="btn-submit" id="redirect-btn" onclick="doRedirect()">
+            <span id="redirect-btn-label">Go to URL</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="result-card" id="redirect-result">
+        <div class="result-header" id="redirect-result-header">
+          <div class="result-icon" id="redirect-result-icon"></div>
+          <span id="redirect-result-title"></span>
+        </div>
+        <div class="result-body" id="redirect-result-body"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>Built with FastAPI &amp; SQLAlchemy — Snip URL Shortener</footer>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    // ── Navigation ──
+    const pages = ["home", "shorten", "redirect"];
+    function show(name) {
+      pages.forEach(p => {
+        document.getElementById("page-" + p).classList.toggle("visible", p === name);
+        const navEl = document.getElementById("nav-" + p);
+        if (navEl) navEl.classList.toggle("active", p === name);
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return false;
+    }
+
+    // ── Helpers ──
+    function setLoading(btnId, labelId, loading) {
+      const btn = document.getElementById(btnId);
+      const lbl = document.getElementById(labelId);
+      btn.disabled = loading;
+      lbl.innerHTML = loading
+        ? '<span class="spinner"></span>'
+        : (btnId === "shorten-btn" ? "Generate short code" : "Go to URL");
+    }
+
+    function resultCard(containerId, headerId, iconId, titleId, bodyId, type, title, rows) {
+      const card   = document.getElementById(containerId);
+      const header = document.getElementById(headerId);
+      const icon   = document.getElementById(iconId);
+      const ttl    = document.getElementById(titleId);
+      const body   = document.getElementById(bodyId);
+
+      const cfg = {
+        success: { headerCls: "success", iconCls: "s", mark: "✓" },
+        error:   { headerCls: "error",   iconCls: "e", mark: "✕" },
+        warn:    { headerCls: "warn",     iconCls: "w", mark: "!" },
+      }[type] || { headerCls: "success", iconCls: "s", mark: "✓" };
+
+      header.className = "result-header " + cfg.headerCls;
+      icon.className   = "result-icon " + cfg.iconCls;
+      icon.textContent = cfg.mark;
+      ttl.textContent  = title;
+
+      body.innerHTML = rows.map((r, i) => `
+        <div class="result-row">
+          <span class="result-label">${r.label}</span>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <span class="result-value${r.code ? ' code' : ''}">${r.value}</span>
+            ${r.copy ? `<button class="copy-btn" onclick="copyText('${encodeURIComponent(r.value)}', this)">Copy</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      card.classList.add("show");
+    }
+
+    function copyText(encoded, btn) {
+      navigator.clipboard.writeText(decodeURIComponent(encoded)).then(() => {
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = "Copy", 1800);
+      });
+    }
+
+    // ── Shorten ──
+    async function shortenUrl() {
+      const urlInput    = document.getElementById("s-url");
+      const expiryInput = document.getElementById("s-expiry");
+      const url         = urlInput.value.trim();
+
+      if (!url) { urlInput.focus(); return; }
+
+      setLoading("shorten-btn", "shorten-btn-label", true);
+
+      const payload = { url };
+      if (expiryInput.value) {
+        payload.expires_at = new Date(expiryInput.value).toISOString();
+      }
+
+      try {
+        const res  = await fetch(`${API_BASE}/short`, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          resultCard(
+            "shorten-result", "shorten-result-header", "shorten-result-icon",
+            "shorten-result-title", "shorten-result-body",
+            "error", "Request failed",
+            [{ label: "Error", value: data.detail || `HTTP ${res.status}` }]
+          );
+          return;
+        }
+
+        const shortUrl = `${API_BASE}/redirect?s_code=${data.code_used}`;
+        const rows = [
+          { label: "Original URL",  value: data.url,          copy: false },
+          { label: "Short code",    value: data.code_used,    code: true,  copy: true },
+          { label: "Short link",    value: shortUrl,          copy: true  },
+        ];
+        if (data.expires_at) {
+          rows.push({ label: "Expires", value: new Date(data.expires_at).toLocaleString() });
+        }
+        resultCard(
+          "shorten-result", "shorten-result-header", "shorten-result-icon",
+          "shorten-result-title", "shorten-result-body",
+          "success", "Short code generated",
+          rows
+        );
+
+      } catch (err) {
+        resultCard(
+          "shorten-result", "shorten-result-header", "shorten-result-icon",
+          "shorten-result-title", "shorten-result-body",
+          "error", "Could not reach the server",
+          [{ label: "Details", value: "Make sure your FastAPI server is running on port 8000." }]
+        );
+      } finally {
+        setLoading("shorten-btn", "shorten-btn-label", false);
+      }
+    }
+
+    // ── Redirect ──
+    async function doRedirect() {
+      const codeInput = document.getElementById("r-code");
+      const code      = codeInput.value.trim();
+
+      if (!code) { codeInput.focus(); return; }
+
+      setLoading("redirect-btn", "redirect-btn-label", true);
+
+      try {
+        const res = await fetch(`${API_BASE}/redirect?s_code=${encodeURIComponent(code)}`, {
+          method: "GET",
+          redirect: "manual",
+        });
+
+        if (res.type === "opaqueredirect" || res.status === 0 || (res.status >= 300 && res.status < 400)) {
+          const location = res.headers.get("Location") || res.url;
+          resultCard(
+            "redirect-result", "redirect-result-header", "redirect-result-icon",
+            "redirect-result-title", "redirect-result-body",
+            "success", "Redirect found — opening now",
+            [{ label: "Destination", value: location || "Redirecting…", copy: !!location }]
+          );
+          setTimeout(() => { window.location.href = `${API_BASE}/redirect?s_code=${encodeURIComponent(code)}`; }, 800);
+          return;
+        }
+
+        if (res.status === 404) {
+          resultCard(
+            "redirect-result", "redirect-result-header", "redirect-result-icon",
+            "redirect-result-title", "redirect-result-body",
+            "error", "Code not found",
+            [{ label: "Detail", value: "That short code doesn't exist. Double-check and try again." }]
+          );
+          return;
+        }
+
+        if (res.status === 403) {
+          resultCard(
+            "redirect-result", "redirect-result-header", "redirect-result-icon",
+            "redirect-result-title", "redirect-result-body",
+            "warn", "Code expired",
+            [{ label: "Detail", value: "This short code has expired. Generate a new one." }]
+          );
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+        resultCard(
+          "redirect-result", "redirect-result-header", "redirect-result-icon",
+          "redirect-result-title", "redirect-result-body",
+          "error", `Error ${res.status}`,
+          [{ label: "Detail", value: data.detail || "Unexpected error from the server." }]
+        );
+
+      } catch (err) {
+        window.location.href = `${API_BASE}/redirect?s_code=${encodeURIComponent(code)}`;
+      } finally {
+        setLoading("redirect-btn", "redirect-btn-label", false);
+      }
+    }
+
+    // ── Enter key ──
+    document.getElementById("s-url").addEventListener("keydown",   e => e.key === "Enter" && shortenUrl());
+    document.getElementById("s-expiry").addEventListener("keydown", e => e.key === "Enter" && shortenUrl());
+    document.getElementById("r-code").addEventListener("keydown",   e => e.key === "Enter" && doRedirect());
+  </script>
+</body>
+</html>
